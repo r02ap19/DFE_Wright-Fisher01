@@ -1,0 +1,1 @@
+gen	s	h	pos	ind	hom

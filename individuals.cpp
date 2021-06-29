@@ -102,7 +102,7 @@ void Individuals::initialise(double kk, Parameters para, std::gamma_distribution
 			pos = findpos(gen);
 			//add mutation
 			w *= chromo.addDelMutation(hom, pos, ss, hh);
-		}
+		}//hello Anders!
 	}
 }
 

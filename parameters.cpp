@@ -5,34 +5,33 @@ Parameters::Parameters() {
 	//Simulation
 	SimNr = 99001;
 	rep = 1; //replicates
-	gen = 50001; //generations
-	out_int = 1; //generation interval for output (population & trait)
+	gen = 10001; //generations
+	out_int = 10; //generation interval for output (population)
 	out_start = 1; //output start generation
-	PopMut_interval = 50000;
+	PopMut_interval = 5000;
 	SFS_sample = 100;
 
 	//Landscape
-	K = 5000; // Population census size
+	K = 500; // Population census size
 	x_max = 1;
 	y_max = 1;
 
 	//Deleterious mutations
-	loadEffect = 1; //0 = affects offsping survival; 1 = affects fecundity and fertilization or mating probability in males;
+	loadEffect = 1; //0 = affects offsping survival; 1 = affects probability of reproducing;
 	initial_nMut = 0;
 	R = 1.0; //genome (see Roze & Rousset 2009, JEB) - corresponds to recombination rate
 	Ud = 1.0; //mutation rate for mildly deleterious mutations / diploid genome / generation (see Spigler et al. 2016, Evolution)
 	Ul = 0.0000000000001; //mutation rate for lethal mutations / diploid genome / generation (see Spigler et al. 2016, Evolution)
-	mean_sd = 0.05; //mean selection coefficient for mildly deleterious mutations
-	mean_hd = 0.3; //mean dominance coefficient for mildly deleterious mutations
+	mean_sd = 0.05; //mean selection coefficient for mildly deleterious mutations (for some values of sh_dist)
+	mean_hd = 0.3; //mean dominance coefficient for mildly deleterious mutations (for some values of sh_dist)
 	sl = 1.0; //selection coefficient for lethal mutations (fix - not sampled from a distribution)
 	hl = 0.02; //mean dominance coefficient for lethal mutations
 
 	//DFE Simulations
 	sh_dist = 8;
 	neut_pos = 0;
-	mean = 10000;
+	mean = 5000;
 	shape = 0.4;
-
 }
 
 void Parameters::outPara(string name) {
@@ -69,6 +68,8 @@ void Parameters::outPara(string name) {
 	out << "sh_dist\t" << sh_dist << endl;
 	out << "neut_pos\t" << neut_pos << endl;
 	out << "SFS_sample\t" << SFS_sample << endl;
+	out << "mean\t" << mean << endl;
+	out << "shape\t" << shape << endl; 
 
 	out.close();
 }

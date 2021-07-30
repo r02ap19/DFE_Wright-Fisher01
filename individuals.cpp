@@ -91,7 +91,7 @@ void Individuals::initialise(double kk, Parameters para, std::gamma_distribution
 				ss = ss_cof(gen);
 				ss = ss / double(0.5 * 4 * para.K);
 				hh = 0.5;
-				if (ss > 1.0)(ss = 1.0);
+				if (ss > 1.0)(ss = 0.99999);
 				//while (ss > 1.0)
 				//{
 				//	ss = ss_cof(gen);
@@ -102,7 +102,7 @@ void Individuals::initialise(double kk, Parameters para, std::gamma_distribution
 			pos = findpos(gen);
 			//add mutation
 			w *= chromo.addDelMutation(hom, pos, ss, hh);
-		}//hello Anders!
+		}
 	}
 }
 
@@ -214,7 +214,7 @@ void Individuals::delet_mutation(int nmut, double kk, std::uniform_real_distribu
 			ss = ss_cof(gen);
 			ss = ss / double(0.5 * 4 * para.K);
 			hh = 0.5;
-			if (ss > 1.0)(ss = 1.0);
+			if (ss > 1.0)(ss = 0.99999);
 			//while (ss > 1.0)
 			//{
 			//	ss = ss_cof(gen);

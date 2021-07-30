@@ -581,7 +581,7 @@ void housekeeping() {
 			}
 			pop[x][y]->computeStats(para);
 
-			//output populations and traits
+			//output populations
 			if (g > para.out_start - 1 && (g % para.out_int == 0)) {
 				pop[x][y]->outPop(r, g, &pops);
 			}

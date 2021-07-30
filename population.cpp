@@ -101,3 +101,4 @@ void Population::outMutations(int n, int r, int g, std::ofstream* out, Parameter
 		*out << (double)iter->second.count / (2.0 * (double)para.K) << endl;
 	}
 }
+

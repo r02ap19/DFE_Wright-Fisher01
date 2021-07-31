@@ -106,7 +106,7 @@ void initialisation() {
 		//do not intialise the single pop. - do it only when there is a population
 		for (int jj = 0; jj < 1; jj++) pop[j][jj] = NULL;
 	}
-	pop[0][0] = new Population(0,0);
+	pop[0][0] = new Population(0, 0);
 	pop[0][0]->initialise_pop(para.K, k, para, s_mild, position, linked_neutral);
 }
 
@@ -130,7 +130,7 @@ void reproduction_1(void) { //fertility selection
 
 				//sample index for individual
 				std::uniform_int_distribution<> fe_WF(0, (pop[x][y]->N - 1));
-				
+
 				//clear Map of population's deleterious mutations
 				if (!pop[x][y]->popMuts.empty()) pop[x][y]->popMuts.clear();
 
@@ -295,7 +295,7 @@ void inheritance_0(Individuals* pup, Individuals mom, Individuals dad) {
 
 		//no mutations before cross-overs positions
 		while (n_crossovers > 0 && *itercross < iter->first) {
-			if (*itercross > (para.R / 2.0)) { 
+			if (*itercross > (para.R / 2.0)) {
 				pup->chromo.linkNeut[0] = mom.chromo.linkNeut[hom];
 				check_neutral = false;
 			}
@@ -324,7 +324,7 @@ void inheritance_0(Individuals* pup, Individuals mom, Individuals dad) {
 
 				pup->chromo.nMut++;
 				//calculate fitness considering the mutation as heterozygote
-				pup->w *= (1.0 - iter->second.h * iter->second.s);		
+				pup->w *= (1.0 - iter->second.h * iter->second.s);
 
 			}
 		}
@@ -443,7 +443,7 @@ void inheritance_1(Individuals* pup, Individuals mom, Individuals dad) {
 
 		//no mutations before cross-overs positions
 		while (n_crossovers > 0 && *itercross < iter->first) {
-			if (itercross == recomSites.end()) { 
+			if (itercross == recomSites.end()) {
 				pup->chromo.linkNeut[0] = mom.chromo.linkNeut[hom];
 				check_neutral = false;
 			}
@@ -498,7 +498,7 @@ void inheritance_1(Individuals* pup, Individuals mom, Individuals dad) {
 			recomSites.insert(cross);
 		}
 		itercross = recomSites.begin(); //iterator through crossover positions
-	    //sample starting homologue
+		//sample starting homologue
 		hom = Bern(rdgen);
 		iter = dad.chromo.mutations.begin();
 
@@ -588,7 +588,7 @@ void housekeeping() {
 
 			//output frequency of deleterious mutations
 			if (g > para.out_start - 1 && g > 0 && g % para.PopMut_interval == 0) pop[x][y]->outMutations(para.K, r, g, &popmut, para);
-			
+
 			pop[x][y]->tmp_inds.clear();
 		}
 	}
@@ -602,14 +602,14 @@ void outPop_header(void) {
 	pops << endl;
 }
 
-void outPopMut_header(void){
+void outPopMut_header(void) {
 	string name;
 	name = dirOut + "Sim" + Int2Str(para.SimNr) + "_PopMut.txt";
 	popmut.open(name.c_str());
 	popmut << "rep\tgen\ts\th\tfreq" << endl;
 }
 
-void outSFS_sample_header(void){
+void outSFS_sample_header(void) {
 	string name;
 	name = dirOut + "Sim" + Int2Str(para.SimNr) + "_SFSsample.txt";
 	SFSsample.open(name.c_str());

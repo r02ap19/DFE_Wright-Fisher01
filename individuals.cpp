@@ -82,8 +82,8 @@ void Individuals::initialise(double kk, Parameters para, std::gamma_distribution
 				hh = 0.5;
 				while (ss > 1.0)
 				{
-				ss = ss_cof(gen);
-				ss = ss / double(0.5 * 4 * para.K);
+					ss = ss_cof(gen);
+					ss = ss / double(0.5 * 4 * para.K);
 				}
 			}
 			if (para.sh_dist == 8) {
@@ -210,7 +210,7 @@ void Individuals::delet_mutation(int nmut, double kk, std::uniform_real_distribu
 			}
 		}
 		if (para.sh_dist == 8) {
-			gamma_distribution<double> ss_cof(para.shape, (para.mean/para.shape));
+			gamma_distribution<double> ss_cof(para.shape, (para.mean / para.shape));
 			ss = ss_cof(gen);
 			ss = ss / double(0.5 * 4 * para.K);
 			hh = 0.5;

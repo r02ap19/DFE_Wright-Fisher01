@@ -8,7 +8,7 @@ Parameters::Parameters() {
 	gen = 10001; //generations
 	out_int = 10; //generation interval for output (population)
 	out_start = 1; //output start generation
-	PopMut_interval = 5000;
+	PopMut_interval = 50;
 	SFS_sample = 100;
 
 	//Landscape
@@ -50,8 +50,8 @@ void Parameters::outPara(string name) {
 
 	//Landscape	
 	out << "K\t" << K << endl; //N (census population size)
-	out << "x_max\t" << x_max << endl; 
-	out << "y_max\t" << y_max << endl; 
+	out << "x_max\t" << x_max << endl;
+	out << "y_max\t" << y_max << endl;
 
 	//Mutations
 	out << "load_effect\t" << loadEffect << endl;
@@ -69,10 +69,10 @@ void Parameters::outPara(string name) {
 	out << "neut_pos\t" << neut_pos << endl;
 	out << "SFS_sample\t" << SFS_sample << endl;
 	out << "mean\t" << mean << endl;
-	out << "shape\t" << shape << endl; 
+	out << "shape\t" << shape << endl;
 
 	out.close();
 }
 //------------------------------
-Parameters::~Parameters(){
+Parameters::~Parameters() {
 }

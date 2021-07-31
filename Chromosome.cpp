@@ -38,4 +38,3 @@ void Chromosome::InitNeutral(double s1, double s2)
 	linkNeut[0] = s1;
 	linkNeut[1] = s2;
 }
-

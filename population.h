@@ -21,7 +21,7 @@ typedef std::map<double, pop_muts, std::less<double>> MapPopMuts;
 
 class Population {
 public:
-	Population(int, int); 
+	Population(int, int);
 	~Population();
 	int N, Noffs;
 	int x, y;

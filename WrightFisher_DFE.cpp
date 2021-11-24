@@ -12,8 +12,9 @@ int main(int argc, char* argv[])
 
 
 	para.SimNr = std::atoi(argv[1]);
-	para.Ud = std::atof(argv[2]);
-	para.sh_dist = std::atoi(argv[3]);
+	para.mean = std::atof(argv[2]);
+	para.shape = std::atof(argv[3]);
+	para.assumed = std::atoi(argv[4]);
 
 	RunModel();
 
@@ -56,6 +57,7 @@ void RunModel(void) {
 	if (para.PopMut_interval > 0) {
 		outPopMut_header();
 		outSFS_sample_header();
+		outNeutral_SFS_sample_header();
 	}
 	for (r = 0; r < para.rep; r++) {
 		std::cout << "rep = " << r << "==================" << endl;
@@ -96,6 +98,7 @@ void RunModel(void) {
 	if (pops.is_open()) pops.close();
 	if (popmut.is_open()) popmut.close();
 	if (SFSsample.is_open()) SFSsample.close();
+	if (neutralSFSsample.is_open()) neutralSFSsample.close();
 }
 
 void initialisation() {
@@ -115,39 +118,96 @@ void reproduction_1(void) { //fertility selection
 	int n_mut;
 	double p_surv; //survival probability 
 	Individuals* ind;
-	int mate1, mate2;
+	int mate1, mate2, counter;
 	double pr1, pr2;
 	int gg; // count number of sampled individuals for SFS
 	gg = 0;
 	std::poisson_distribution<> n_mildmut(para.Ud);
 	std::poisson_distribution<> n_lethal(para.Ul);
 
+	double f_Wmax, m_Wmax, f_Wmin, m_Wmin, count_f, count_m;
+
+	f_Wmax = 0.0;
+	m_Wmax = 0.0;
+	f_Wmin = 1.0;
+	m_Wmin = 1.0;
+
+	count_f = 0.0;
+	count_m = 0.0;
+	counter = 0;
+
+	vector<Individuals>::iterator it;
 
 	//Loop through the landscape
 	for (int x = 0; x < para.x_max; x++) {
 		for (int y = 0; y < para.y_max; y++) {
 			if (pop[x][y] != NULL) {
 
-				//sample index for individual
-				std::uniform_int_distribution<> fe_WF(0, (pop[x][y]->N - 1));
+				//summing male and female fitness to calculate mean 
+				for (int i = 0; i < (para.K -1); i++) {
+					count_f += pop[x][y]->inds[i].w;
+				}
+
+				count_f = (count_f / para.K);
+				
+				//Re-calculating max female and male fitness
+				for (int i = 0; i < ((para.K / 2) - 1); i++) {
+					if (pop[x][y]->inds[i].w > f_Wmax) (f_Wmax = pop[x][y]->inds[i].w);
+					if (pop[x][y]->inds[i].w < f_Wmin) (f_Wmin = pop[x][y]->inds[i].w);
+				}
+				for (int i = ((para.K) / 2); i < (para.K - 1); i++) {
+					if (pop[x][y]->inds[i].w > m_Wmax) (m_Wmax = pop[x][y]->inds[i].w);
+					if (pop[x][y]->inds[i].w < m_Wmin) (m_Wmin = pop[x][y]->inds[i].w);
+				}
+
+				//cout << "max/min female fitness: " << f_Wmax << "\t"<< f_Wmin << endl;
+				//cout << "max/min male fitness: " << m_Wmax << "\t" << m_Wmin << endl;
+
+
+				//scaling after population mean fitness
+				for (int i = 0; i < (para.K); i++) {
+					if (i < (para.K / 2)) {
+						pop[x][y]->inds[i].w = (pop[x][y]->inds[i].w/ (count_f));
+					}
+					else {
+						pop[x][y]->inds[i].w = (pop[x][y]->inds[i].w / (count_f));
+					}
+				}
+
+				//Re-calculating max female and male fitness
+				for (int i = 0; i < ((para.K / 2)-1); i++) {
+					if (pop[x][y]->inds[i].w > f_Wmax) (f_Wmax = pop[x][y]->inds[i].w);
+					if (pop[x][y]->inds[i].w < f_Wmin) (f_Wmin = pop[x][y]->inds[i].w);
+				}
+				for (int i = ((para.K) / 2); i < (para.K - 1); i++) {
+					if (pop[x][y]->inds[i].w > m_Wmax) (m_Wmax = pop[x][y]->inds[i].w);
+					if (pop[x][y]->inds[i].w < m_Wmin) (m_Wmin = pop[x][y]->inds[i].w);
+				}
+
+				//cout << "After: max/min female fitness: " << f_Wmax << "\t" << f_Wmin << endl;
+				//cout << "After: max/min male fitness: " << m_Wmax << "\t" << m_Wmin << endl;
+
+				//sample index for male and female parents (creates seperate sexes, removes self-fertilization as in SFS_CODE) //31/07/31
+				std::uniform_int_distribution<> fe_WF(0, ((pop[x][y]->N)/2)-1);
+				std::uniform_int_distribution<> ma_WF(((pop[x][y]->N) / 2), (pop[x][y]->N - 1));
 
 				//clear Map of population's deleterious mutations
 				if (!pop[x][y]->popMuts.empty()) pop[x][y]->popMuts.clear();
-
 
 				//MATING
 				for (int k = 0; k < (pop[x][y]->N); k++) {
 					//pick two random individuals as mates (possibly the same individual)
 					mate1 = fe_WF(rdgen);
-					mate2 = fe_WF(rdgen);
+					mate2 = ma_WF(rdgen);
 
-					//Let the probability of reproducing after being sampled be equal to fitness
+					//Let the probability of reproducing after being sampled be relative to fitness
 
-					std::uniform_real_distribution<> scaled(0, pop[x][y]->Wmax);
+					std::uniform_real_distribution<> scaled_f(0, f_Wmax);
+					std::uniform_real_distribution<> scaled_m(0, m_Wmax);
 
-					if (scaled(rdgen) < pop[x][y]->inds[mate1].w)(pop[x][y]->inds[mate1].reproduce = true);
+					if (scaled_f(rdgen) <= pop[x][y]->inds[mate1].w)(pop[x][y]->inds[mate1].reproduce = true);
 					else (pop[x][y]->inds[mate1].reproduce = false);
-					if (scaled(rdgen) < pop[x][y]->inds[mate2].w)(pop[x][y]->inds[mate2].reproduce = true);
+					if (scaled_m(rdgen) <= pop[x][y]->inds[mate2].w)(pop[x][y]->inds[mate2].reproduce = true);
 					else (pop[x][y]->inds[mate2].reproduce = false);
 
 					if (pop[x][y]->inds[mate1].reproduce && pop[x][y]->inds[mate2].reproduce) {
@@ -155,6 +215,14 @@ void reproduction_1(void) { //fertility selection
 						gg += 1;
 						if (para.neut_pos == 0) inheritance_0(ind, pop[x][y]->inds[mate1], pop[x][y]->inds[mate2]);
 						else inheritance_1(ind, pop[x][y]->inds[mate1], pop[x][y]->inds[mate2]);
+
+						if (para.neutral_genome == true) {
+							neutral_inheritance(ind, pop[x][y]->inds[mate1], pop[x][y]->inds[mate2]);
+							n_mut = n_mildmut(rdgen);
+							if (n_mut > 0) {
+								ind->neutral_genome_mut(n_mut, position, uniform, para);
+							}
+						}
 
 						//Mutation in neutral linked locus
 						int hom = Bern(rdgen);
@@ -170,24 +238,33 @@ void reproduction_1(void) { //fertility selection
 
 						if (gg <= para.SFS_sample && g >= para.PopMut_interval) { //sample genomes of individuals for contructions of SFS
 							ind->SFS_sample(g, gg, &SFSsample);
+							ind->neutralSFS_sample(g, gg, &neutralSFSsample);
 						}
-
-						if (ind->w > 0.0) {
-
+						if (ind->w > 0) {
+							if (ind->w == 1)( counter += 1 );
 							if (ind->alive && k < para.K) {
 								pop[x][y]->tmp_inds.push_back(*ind);
 							}
 							else {
 								ind->deleteInd();
 							}
+							delete ind;
+							
 						}
 						else {
 							ind->deleteInd();
+							k--;
 						}
-						delete ind;
+
 					}
 					else k--;
 				}
+				//cout << "number of perfect inds generation:" << endl;
+				//cout << counter << endl;
+				cout << "varience at the neutral linked locus: " << pop[x][y]->Vneutral << endl;
+				//cout << "max female fitness: " << f_Wmax << endl;
+				//cout << "max male fitness: " << m_Wmax << endl;
+				//cout << "pop size: " << pop[x][y]->N << endl;
 				pop[x][y]->N = 0;
 				pop[x][y]->deleteAdults();
 			}
@@ -243,6 +320,7 @@ void reproduction_0(void) {
 
 					if (gg <= para.SFS_sample && g >= para.PopMut_interval) { //sample genomes of individuals for contructions of SFS
 						ind->SFS_sample(g, gg, &SFSsample);
+						ind->neutralSFS_sample(g, gg, &neutralSFSsample);
 					}
 
 					std::uniform_real_distribution<> scaled(0, pop[x][y]->Wmax);
@@ -263,6 +341,102 @@ void reproduction_0(void) {
 	}
 }
 
+void neutral_inheritance(Individuals* pup, Individuals mom, Individuals dad) {
+	int rdn, rdn2, pos, pos2;
+	int hom;
+	int n_crossovers;
+	double cross;
+	std::map<double, mutation>::iterator iter, iter2;
+	std::set <double> recomSites;
+	std::set<double>::iterator itercross;
+
+	if (mom.neutral_genome.nMut > 0) {
+		//sample no. of crossovers
+		n_crossovers = crossn(rdgen);
+		//sample crossover positions
+		for (int i = 0; i < n_crossovers; i++) {
+			cross = position(rdgen);
+			recomSites.insert(cross);
+		}
+		itercross = recomSites.begin(); //iterator through crossover positions
+
+		//sample starting homologue
+		hom = Bern(rdgen);
+		iter = mom.neutral_genome.mutations.begin();
+
+		//no mutations before cross-overs positions
+		while (n_crossovers > 0 && *itercross < iter->first) {
+			if (hom == 0) hom++;
+			else hom--;
+			itercross++;
+			n_crossovers--;
+		}
+		for (iter = mom.neutral_genome.mutations.begin(); iter != mom.neutral_genome.mutations.end(); iter++) {
+			//cross-overs
+			while (n_crossovers > 0 && *itercross < iter->first) {
+				if (hom == 0) hom++;
+				else hom--;
+				itercross++;
+				n_crossovers--;
+			}
+
+			//if mutation is on the right homologue inherit it, otherwise ignore it
+			if (iter->second.homol == hom || iter->second.homol == 2) {
+				pup->neutral_genome.mutations[iter->first] = iter->second;
+				pup->neutral_genome.mutations[iter->first].homol = 0; //inherit first homologue from mon
+
+				pup->neutral_genome.nMut++;
+
+			}
+		}
+		if (!recomSites.empty()) recomSites.clear();
+	}
+
+	if (dad.neutral_genome.nMut > 0) {
+		//sample no. of crossovers
+		n_crossovers = crossn(rdgen);
+		//sample crossover positions
+		for (int i = 0; i < n_crossovers; i++) {
+			cross = position(rdgen);
+			recomSites.insert(cross);
+		}
+		itercross = recomSites.begin(); //iterator through crossover positions
+										//sample starting homologue
+		hom = Bern(rdgen);
+		iter = dad.neutral_genome.mutations.begin();
+
+		while (n_crossovers > 0 && *itercross < iter->first) {
+			if (hom == 0) hom++;
+			else hom--;
+			itercross++;
+			n_crossovers--;
+		}
+		for (iter = dad.neutral_genome.mutations.begin(); iter != dad.neutral_genome.mutations.end(); iter++) {
+			//crossovers
+			while (n_crossovers > 0 && *itercross < iter->first) {
+				if (hom == 0) hom++;
+				else hom--;
+				itercross++;
+				n_crossovers--;
+			}
+			if (iter->second.homol == hom || iter->second.homol == 2) {
+				iter2 = pup->neutral_genome.mutations.find(iter->first);
+				//if mutation is already present --> it is homozygous
+				if (iter2 != pup->neutral_genome.mutations.end()) {
+					iter2->second.homol = 2; //mutation is homozygote
+					pup->neutral_genome.Nho++;
+				}
+				else { //mutation is heterozygote
+					pup->neutral_genome.mutations[iter->first] = iter->second;
+					pup->neutral_genome.mutations[iter->first].homol = 1;
+					pup->neutral_genome.nMut++;
+				}
+			}
+
+		}
+		if (!recomSites.empty()) recomSites.clear();
+	}
+}
 
 void inheritance_0(Individuals* pup, Individuals mom, Individuals dad) {
 	int rdn, rdn2, pos, pos2;
@@ -324,7 +498,7 @@ void inheritance_0(Individuals* pup, Individuals mom, Individuals dad) {
 
 				pup->chromo.nMut++;
 				//calculate fitness considering the mutation as heterozygote
-				pup->w *= (1.0 - iter->second.h * iter->second.s);
+				pup->w -= (iter->second.h * iter->second.s);
 
 			}
 		}
@@ -386,15 +560,16 @@ void inheritance_0(Individuals* pup, Individuals mom, Individuals dad) {
 					iter2->second.homol = 2; //mutation is homozygote
 					pup->chromo.Nho++;
 					//change fitness effect
-					pup->w /= (1.0 - iter2->second.h * iter2->second.s);
-					pup->w *= (1.0 - iter2->second.s);
+					pup->w += (iter2->second.h * iter2->second.s);
+					pup->w -= (2*(iter2->second.s) + pow(iter2->second.s, 2));
+					//pup->w -= (2 * (iter2->second.s));
 				}
 				else { //mutation is heterozygote
 					pup->chromo.mutations[iter->first] = iter->second;
 					pup->chromo.mutations[iter->first].homol = 1;
 					pup->chromo.nMut++;
 					//fitness effect
-					pup->w *= (1.0 - iter->second.h * iter->second.s);
+					pup->w -= (iter->second.h * iter->second.s);
 				}
 			}
 		}
@@ -472,7 +647,7 @@ void inheritance_1(Individuals* pup, Individuals mom, Individuals dad) {
 
 				pup->chromo.nMut++;
 				//calculate fitness considering the mutation as heterozygote
-				pup->w *= (1.0 - iter->second.h * iter->second.s);
+				pup->w -= (iter->second.h * iter->second.s);
 			}
 		}
 		if (!recomSites.empty()) recomSites.clear();
@@ -533,15 +708,16 @@ void inheritance_1(Individuals* pup, Individuals mom, Individuals dad) {
 					iter2->second.homol = 2; //mutation is homozygote
 					pup->chromo.Nho++;
 					//change fitness effect
-					pup->w /= (1.0 - iter2->second.h * iter2->second.s);
-					pup->w *= (1.0 - iter2->second.s);
+					pup->w += (iter2->second.h * iter2->second.s);
+					pup->w -= (2*(iter2->second.s) + pow(iter2->second.s,2));
+					//pup->w -= (2 * (iter2->second.s));
 				}
 				else { //mutation is heterozygote
 					pup->chromo.mutations[iter->first] = iter->second;
 					pup->chromo.mutations[iter->first].homol = 1;
 					pup->chromo.nMut++;
 					//fitness effect
-					pup->w *= (1.0 - iter->second.h * iter->second.s);
+					pup->w -= (iter->second.h * iter->second.s);
 				}
 			}
 		}
@@ -567,10 +743,11 @@ void housekeeping() {
 			pop[x][y]->set2zero();
 
 			for (iter = pop[x][y]->tmp_inds.begin(); iter != pop[x][y]->tmp_inds.end(); iter++) {
-				pop[x][y]->inds.push_back(*iter);
 				pop[x][y]->N++;
-				pop[x][y]->computeSums(para, *iter);
+				pop[x][y]->inds.push_back(*iter);
+			}
 
+			for (iter = pop[x][y]->tmp_inds.begin(); iter != pop[x][y]->tmp_inds.end(); iter++) {
 				//sum deleterious mutation to calculate population frequencies
 				if (g % para.PopMut_interval == 0) {
 					for (iter2 = iter->chromo.mutations.begin(); iter2 != iter->chromo.mutations.end(); iter2++) {
@@ -579,7 +756,13 @@ void housekeeping() {
 					}
 				}
 			}
-			pop[x][y]->computeStats(para);
+
+			for (iter = pop[x][y]->inds.begin(); iter != pop[x][y]->inds.end(); iter++) {
+				pop[x][y]->computeSums(para, *iter); //compute normalized Wmin & Wmax; boundries for reproduction sampling in next generation.
+				//cout << iter->w << endl;
+			}
+
+			pop[x][y]->computeStats(para); //compute normalized mean fitness for output
 
 			//output populations
 			if (g > para.out_start - 1 && (g % para.out_int == 0)) {
@@ -592,6 +775,13 @@ void housekeeping() {
 			pop[x][y]->tmp_inds.clear();
 		}
 	}
+}
+
+void outNeutral_SFS_sample_header(void){
+	string name;
+	name = dirOut + "Sim" + Int2Str(para.SimNr) + "_neutralSFSsample.txt";
+	neutralSFSsample.open(name.c_str());
+	neutralSFSsample << "gen\ts\th\tpos\tind\thom" << endl;
 }
 
 void outPop_header(void) {
@@ -615,3 +805,4 @@ void outSFS_sample_header(void) {
 	SFSsample.open(name.c_str());
 	SFSsample << "gen\ts\th\tpos\tind\thom" << endl;
 }
+

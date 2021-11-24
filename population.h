@@ -33,7 +33,7 @@ public:
 
 	double Vneutral, VneutralSD; //neutral variance, sum of squares
 
-	double Wmax; // maximum individual fitness in any given generation. Used as upper bound for sampling rep prob when loadEffect = 1 to drastically increase speed.
+	double Wmax, Wmin; // maximum and minimum individual fitness in any given generation. Used as upper and lower bounds for sampling rep prob when loadEffect = 1 to drastically increase speed.
 
 	vector<Individuals> inds;
 	vector<Individuals> tmp_inds;

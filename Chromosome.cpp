@@ -25,12 +25,29 @@ double Chromosome::addDelMutation(int hom, double pos, double ss, double hh) {
 	if (mutations.find(pos) == mutations.end()) {
 		nMut++;
 		mutations[pos] = mut;
-		v = (1.0 - hh * ss);
+		v = (hh * ss);
 	}
 	else v = 1.0;
 
 	return v;
 }
+
+void Chromosome::add_neutral_mut(int hom, double pos, double ss, double hh) {
+	mutation mut;
+	mut.homol = hom;
+	mut.s = ss;
+	mut.h = hh;
+	mut.pos = pos;
+
+	if (mutations.find(pos) == mutations.end()) {
+		nMut++;
+		mutations[pos] = mut;
+	}
+	else {
+		cout << "mutation already present" << endl;
+	}
+}
+
 //-------------------------------
 //GB_07/04/20: add neutral locus linked to deleterious mutations (Keightley & Otto 2006)
 void Chromosome::InitNeutral(double s1, double s2)

@@ -18,6 +18,7 @@ Individuals::~Individuals() {
 
 void Individuals::deleteInd(void) {
 	chromo.deleteChromo();
+	neutral_genome.deleteChromo();
 }
 
 void Individuals::initialise(double kk, Parameters para, std::gamma_distribution<> finds, std::uniform_real_distribution<> findpos, std::normal_distribution<> neut) {
@@ -89,9 +90,9 @@ void Individuals::initialise(double kk, Parameters para, std::gamma_distribution
 			if (para.sh_dist == 8) {
 				gamma_distribution<double> ss_cof(para.shape, (para.mean / para.shape));
 				ss = ss_cof(gen);
-				ss = ss / double(0.5 * 4 * para.K);
-				hh = 0.5;
-				if (ss > 1.0)(ss = 0.99999);
+				ss = ss / double(2 * para.assumed_Ne);
+				hh = 1.0;
+				//if (ss > 1.0)(ss = 0.99999);
 				//while (ss > 1.0)
 				//{
 				//	ss = ss_cof(gen);
@@ -101,7 +102,7 @@ void Individuals::initialise(double kk, Parameters para, std::gamma_distribution
 			//sample position
 			pos = findpos(gen);
 			//add mutation
-			w *= chromo.addDelMutation(hom, pos, ss, hh);
+			w -= chromo.addDelMutation(hom, pos, ss, hh);
 		}
 	}
 }
@@ -120,7 +121,7 @@ void Individuals::benef_mutation(int nmut, double s, std::uniform_real_distribut
 		//sample position
 		pos = findpos(gen);
 		//add mutation
-		w *= chromo.addDelMutation(hom, pos, ss, 1.0); //assume complete dominance of beneficial mutations
+		w += chromo.addDelMutation(hom, pos, ss, 1.0); //assume complete dominance of beneficial mutations
 	}
 }
 //--------------------------------------------------------------------------
@@ -141,14 +142,15 @@ void Individuals::back_mutation(int nmut)
 			it->second.homol = hom(gen);
 			chromo.Nho--;
 			//update fitness
-			w /= (1.0 - it->second.s);
-			w *= (1.0 - it->second.h * it->second.s);
+			w += (2*(it->second.s)+ pow(it->second.s,2));
+			//w += (2 * (it->second.s));
+			w -= (it->second.h * it->second.s);
 		}
 		else { //mutation is heterozygote
 			chromo.mutations.erase(it);
 			chromo.nMut--;
 			//update fitness
-			w /= (1.0 - it->second.h * it->second.s);
+			w += (it->second.h * it->second.s);
 		}
 	}
 }
@@ -186,7 +188,7 @@ void Individuals::delet_mutation(int nmut, double kk, std::uniform_real_distribu
 			hh = 0.5;
 		}
 		if (para.sh_dist == 4) {
-			ss = uniform(gen);;
+			ss = uniform(gen);
 			hh = 0.2;
 		}
 		if (para.sh_dist == 5) {
@@ -212,9 +214,9 @@ void Individuals::delet_mutation(int nmut, double kk, std::uniform_real_distribu
 		if (para.sh_dist == 8) {
 			gamma_distribution<double> ss_cof(para.shape, (para.mean / para.shape));
 			ss = ss_cof(gen);
-			ss = ss / double(0.5 * 4 * para.K);
-			hh = 0.5;
-			if (ss > 1.0)(ss = 0.99999);
+			ss = ss / double(2 * para.K);
+			hh = 1.0;
+			//if (ss > 1.0)(ss = 0.99999);
 			//while (ss > 1.0)
 			//{
 			//	ss = ss_cof(gen);
@@ -224,9 +226,28 @@ void Individuals::delet_mutation(int nmut, double kk, std::uniform_real_distribu
 		//sample position
 		pos = findpos(gen);
 		//add mutation
-		w *= chromo.addDelMutation(hom, pos, ss, hh);
+		w -= chromo.addDelMutation(hom, pos, ss, hh);
 	}
 }
+
+void Individuals::neutral_genome_mut(int nmut, std::uniform_real_distribution<> findpos,
+	 std::uniform_real_distribution<> uniform, Parameters para) {
+	int hom;
+	double pos;
+	double ss;
+	double hh;
+
+	for (int i = 0; i < nmut; i++) {
+		//sample homologue
+		hom = findhom(gen);
+		ss = 0.0;
+		hh = uniform(gen);
+		//sample position
+		pos = findpos(gen);
+		neutral_genome.add_neutral_mut(hom, pos, ss, hh);
+	}
+}
+
 //--------------------------------------------------------------------------
 void Individuals::delet_mutation(int nmut, std::uniform_real_distribution<> findpos,
 	double ss, double hh) {
@@ -236,7 +257,7 @@ void Individuals::delet_mutation(int nmut, std::uniform_real_distribution<> find
 	for (int i = 0; i < nmut; i++) {
 		hom = findhom(gen);
 		pos = findpos(gen);
-		w *= chromo.addDelMutation(hom, pos, ss, hh);
+		w -= chromo.addDelMutation(hom, pos, ss, hh);
 	}
 }
 
@@ -245,6 +266,16 @@ void Individuals::SFS_sample(int g, int gg, std::ofstream* out) {
 	map<double, mutation>::iterator iter;
 
 	for (iter = chromo.mutations.begin(); iter != chromo.mutations.end(); iter++) {
+		*out << g << "\t" << iter->second.s << "\t" << iter->second.h << "\t" << iter->second.pos << "\t" << gg << "\t" << iter->second.homol;
+		*out << endl;
+	}
+}
+
+void Individuals::neutralSFS_sample(int g, int gg, std::ofstream* out) {
+
+	map<double, mutation>::iterator iter;
+
+	for (iter = neutral_genome.mutations.begin(); iter != neutral_genome.mutations.end(); iter++) {
 		*out << g << "\t" << iter->second.s << "\t" << iter->second.h << "\t" << iter->second.pos << "\t" << gg << "\t" << iter->second.homol;
 		*out << endl;
 	}

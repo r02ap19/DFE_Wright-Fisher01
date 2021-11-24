@@ -14,6 +14,7 @@ Population::Population(int xx, int yy) {
 	Homoz = 0.0; Hsd = 0.0;
 	Vneutral = 0.0; VneutralSD = 0.0;
 	Wmax = 0.0;
+	Wmin = 0.0;
 
 	if (!popMuts.empty()) popMuts.clear();
 }
@@ -31,7 +32,7 @@ void Population::initialise_pop(double k, double kk, Parameters para, std::gamma
 	for (int i = 0; i < (int)(N); i++) {
 		inds.push_back(Individuals(para));
 		inds[i].initialise(kk, para, finds, findpos, neut);
-		W += 1.0; //at initialisation every individual has viability = 1
+		W += 1.0; //at initialisation every individual has viability = 0 (relative)
 	}
 }
 void Population::computeSums(Parameters para, Individuals ind) {
@@ -40,7 +41,7 @@ void Population::computeSums(Parameters para, Individuals ind) {
 	W += ind.w;
 	Wsd += ind.w * ind.w; //sum of squares
 	if (ind.w > Wmax)(Wmax = ind.w); //save the highest fitness in current generation for scaled sampling of reproduction probability in loadEffect = 1.
-
+	if (ind.w < Wmin)(Wmin = ind.w);
 	Vneutral += ind.chromo.linkNeut[0] + ind.chromo.linkNeut[1];
 	VneutralSD += (ind.chromo.linkNeut[0] * ind.chromo.linkNeut[0]) + (ind.chromo.linkNeut[1] * ind.chromo.linkNeut[1]); //sum of squares
 }
@@ -61,7 +62,9 @@ void Population::set2zero(void) {
 	Wsd = 0.0;
 	Homoz = 0.0; Hsd = 0.0;
 	Vneutral = 0.0; VneutralSD = 0.0;
-	Wmax = 0.0;
+	Wmax = -100000000000000000000000.0;
+	Wmin = 100000000000000000000000.0;
+
 }
 
 void Population::deleteAdults(void) {
@@ -95,10 +98,15 @@ void Population::outMutations(int n, int r, int g, std::ofstream* out, Parameter
 {
 	map<double, pop_muts>::iterator iter;
 
+	double count; 
+	count = 0.0;
+
 	for (iter = popMuts.begin(); iter != popMuts.end(); iter++) {
 		*out << r << "\t" << g << "\t";
 		*out << iter->second.s << "\t" << iter->second.h << "\t";
 		*out << (double)iter->second.count / (2.0 * (double)para.K) << endl;
+		count += 1.0;
 	}
+	//cout << "total number of mutations: " << count << endl;
 }
 

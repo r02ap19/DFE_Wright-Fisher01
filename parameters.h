@@ -35,10 +35,12 @@ public:
 
 	//DFE
 	int sh_dist; // 0 = s,h sampled as in Spigler et al 2016; 1 = s sampled from unireal (0.0,1.0), h sampled from unireal (0.0,1.0); 2 = as 0, but with distributions for s and h switched. 3 = s sampled uniform, h = 0.5. 4 = s sampled from uniform, h = 0.2. 5 means s=h=0 for all mutations. 6: h=0.5, s gamma dist (0.25, 0.05).
-	//sh_dist = 7: samples s coefficients as scaled values (as 4Nes for Ne = N) using gamma dists from Tataru et al. 2017. (re-scale values by 1/2*4Ne) before adding to genome. sh =8, defines gamma dist from mean and shape parameter, scale calculated (Tataru et al. 2017). 
+	//sh_dist = 7: samples s coefficients as scaled values (as 4Nes for Ne = N) using gamma dists from Tataru et al. 2017. (re-scale values by 1/4Ne) before adding to genome. sh =8, defines gamma dist from mean and shape parameter, scale calculated (Tataru et al. 2017). 
 	int neut_pos; //0: Neutral linked locus is centrometic. 1: Neutral linked locus is telomeric.
 	double mean; // mean of gamma distribution of selection coefficients
 	double shape; //shape of gamma distribution for custom option, sh_dist =8.
+	bool neutral_genome; //false runs only selected genome. true adds an unlinked, neutral genome of same lenght and mut rate (Ud).
+	int assumed_Ne; //used for re-scaling selective effects. Estimated from variation at neutral linked loci
 
 	void outPara(string dir); //Parameter output
 };

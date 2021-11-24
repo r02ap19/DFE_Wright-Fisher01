@@ -35,6 +35,9 @@ public:
 		double, //s
 		double //h
 	);
+
+	void add_neutral_mut(int, double, double, double); //analogous to addDelMutation 
+
 	//Initialized neutral locus 
 	void InitNeutral(
 		double,

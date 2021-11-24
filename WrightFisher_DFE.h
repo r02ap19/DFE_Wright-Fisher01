@@ -33,7 +33,7 @@ clock_t extime;
 Parameters para;
 string dir, dirOut;
 int r, g; // counters for replicates and generations
-ofstream par, pops, popmut, SFSsample;
+ofstream par, pops, popmut, SFSsample, neutralSFSsample;
 int count;
 
 Population*** pop;
@@ -71,7 +71,9 @@ void reproduction_0(void); //offspring selection
 void reproduction_1(void); //fertility selection
 void inheritance_0(Individuals*, Individuals, Individuals); //centrometic neutral linked locus
 void inheritance_1(Individuals*, Individuals, Individuals); //telomeric neutral linked locus
+void neutral_inheritance(Individuals*, Individuals, Individuals); //inheritance of the neutral, unlinked genome
 void outPop_header(void);
 void outPopMut_header(void);
 void outSFS_sample_header(void);
 void housekeeping(void);
+void outNeutral_SFS_sample_header(void);

@@ -5,11 +5,11 @@ Parameters::Parameters() {
 	//Simulation
 	SimNr = 99001;
 	rep = 1; //replicates
-	gen = 10001; //generations
-	out_int = 10; //generation interval for output (population)
+	gen = 10000; //generations
+	out_int = 1; //generation interval for output (population)
 	out_start = 1; //output start generation
-	PopMut_interval = 50;
-	SFS_sample = 100;
+	PopMut_interval = 10000;
+	SFS_sample = 10;
 
 	//Landscape
 	K = 500; // Population census size
@@ -19,7 +19,7 @@ Parameters::Parameters() {
 	//Deleterious mutations
 	loadEffect = 1; //0 = affects offsping survival; 1 = affects probability of reproducing;
 	initial_nMut = 0;
-	R = 1.0; //genome (see Roze & Rousset 2009, JEB) - corresponds to recombination rate
+	R = 10.0;
 	Ud = 1.0; //mutation rate for mildly deleterious mutations / diploid genome / generation (see Spigler et al. 2016, Evolution)
 	Ul = 0.0000000000001; //mutation rate for lethal mutations / diploid genome / generation (see Spigler et al. 2016, Evolution)
 	mean_sd = 0.05; //mean selection coefficient for mildly deleterious mutations (for some values of sh_dist)
@@ -30,8 +30,10 @@ Parameters::Parameters() {
 	//DFE Simulations
 	sh_dist = 8;
 	neut_pos = 0;
-	mean = 5000;
+	mean = 50000000000000000000.0;
 	shape = 0.4;
+	neutral_genome = true;
+	assumed_Ne = 500;
 }
 
 void Parameters::outPara(string name) {
@@ -70,6 +72,8 @@ void Parameters::outPara(string name) {
 	out << "SFS_sample\t" << SFS_sample << endl;
 	out << "mean\t" << mean << endl;
 	out << "shape\t" << shape << endl;
+	out << "neutral_genome\t" << neutral_genome << endl;
+	out << "Assumed Ne\t" << assumed_Ne << endl;
 
 	out.close();
 }

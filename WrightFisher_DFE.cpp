@@ -14,7 +14,7 @@ int main(int argc, char* argv[])
 	para.SimNr = std::atoi(argv[1]);
 	para.mean = std::atof(argv[2]);
 	para.shape = std::atof(argv[3]);
-	para.assumed = std::atoi(argv[4]);
+	para.assumed_Ne = std::atoi(argv[4]);
 
 	RunModel();
 
@@ -65,6 +65,7 @@ void RunModel(void) {
 		//Initialisation
 		initialisation();
 
+
 		//Loop through GENERATIONS ------------------------------------
 		for (g = 0; g < para.gen; g++) {
 
@@ -110,7 +111,7 @@ void initialisation() {
 		for (int jj = 0; jj < 1; jj++) pop[j][jj] = NULL;
 	}
 	pop[0][0] = new Population(0, 0);
-	pop[0][0]->initialise_pop(para.K, k, para, s_mild, position, linked_neutral);
+	pop[0][0]->initialise_pop(para.K, k_h, para, s_mild, position, linked_neutral);
 }
 
 void reproduction_1(void) { //fertility selection
@@ -144,13 +145,18 @@ void reproduction_1(void) { //fertility selection
 			if (pop[x][y] != NULL) {
 
 				//summing male and female fitness to calculate mean 
-				for (int i = 0; i < (para.K -1); i++) {
+				for (int i = 0; i < ((para.K / 2) - 1); i++) {
 					count_f += pop[x][y]->inds[i].w;
 				}
+				for (int i = ((para.K) / 2); i < (para.K - 1); i++) {
+					count_m += pop[x][y]->inds[i].w;
+				}
 
-				count_f = (count_f / para.K);
+				count_f = (count_f / (para.K / 2));
+				count_m = (count_m / (para.K / 2));
+
 				
-				//Re-calculating max female and male fitness
+				//Calculating max female and male fitness
 				for (int i = 0; i < ((para.K / 2) - 1); i++) {
 					if (pop[x][y]->inds[i].w > f_Wmax) (f_Wmax = pop[x][y]->inds[i].w);
 					if (pop[x][y]->inds[i].w < f_Wmin) (f_Wmin = pop[x][y]->inds[i].w);
@@ -160,17 +166,13 @@ void reproduction_1(void) { //fertility selection
 					if (pop[x][y]->inds[i].w < m_Wmin) (m_Wmin = pop[x][y]->inds[i].w);
 				}
 
-				//cout << "max/min female fitness: " << f_Wmax << "\t"<< f_Wmin << endl;
-				//cout << "max/min male fitness: " << m_Wmax << "\t" << m_Wmin << endl;
-
-
 				//scaling after population mean fitness
 				for (int i = 0; i < (para.K); i++) {
 					if (i < (para.K / 2)) {
 						pop[x][y]->inds[i].w = (pop[x][y]->inds[i].w/ (count_f));
 					}
 					else {
-						pop[x][y]->inds[i].w = (pop[x][y]->inds[i].w / (count_f));
+						pop[x][y]->inds[i].w = (pop[x][y]->inds[i].w / (count_m));
 					}
 				}
 
@@ -183,9 +185,6 @@ void reproduction_1(void) { //fertility selection
 					if (pop[x][y]->inds[i].w > m_Wmax) (m_Wmax = pop[x][y]->inds[i].w);
 					if (pop[x][y]->inds[i].w < m_Wmin) (m_Wmin = pop[x][y]->inds[i].w);
 				}
-
-				//cout << "After: max/min female fitness: " << f_Wmax << "\t" << f_Wmin << endl;
-				//cout << "After: max/min male fitness: " << m_Wmax << "\t" << m_Wmin << endl;
 
 				//sample index for male and female parents (creates seperate sexes, removes self-fertilization as in SFS_CODE) //31/07/31
 				std::uniform_int_distribution<> fe_WF(0, ((pop[x][y]->N)/2)-1);
@@ -230,7 +229,7 @@ void reproduction_1(void) { //fertility selection
 
 						//mildly deleterius mutations
 						n_mut = n_mildmut(rdgen);
-						if (n_mut > 0) ind->delet_mutation(n_mut, k, position, s_mild, uniform, para);
+						if (n_mut > 0) ind->delet_mutation(n_mut, k_h, position, s_mild, uniform, para);
 
 						//lethal mutations
 						//n_mut = n_lethal(rdgen);
@@ -255,16 +254,12 @@ void reproduction_1(void) { //fertility selection
 							ind->deleteInd();
 							k--;
 						}
-
 					}
-					else k--;
+					else {
+						k--;
+					}
+
 				}
-				//cout << "number of perfect inds generation:" << endl;
-				//cout << counter << endl;
-				cout << "varience at the neutral linked locus: " << pop[x][y]->Vneutral << endl;
-				//cout << "max female fitness: " << f_Wmax << endl;
-				//cout << "max male fitness: " << m_Wmax << endl;
-				//cout << "pop size: " << pop[x][y]->N << endl;
 				pop[x][y]->N = 0;
 				pop[x][y]->deleteAdults();
 			}
@@ -312,7 +307,7 @@ void reproduction_0(void) {
 
 					//mildly deleterius mutations
 					n_mut = n_mildmut(rdgen);
-					if (n_mut > 0) ind->delet_mutation(n_mut, k, position, s_mild, uniform, para);
+					if (n_mut > 0) ind->delet_mutation(n_mut, k_h, position, s_mild, uniform, para);
 
 					//lethal mutations
 					//n_mut = n_lethal(rdgen);
@@ -498,9 +493,10 @@ void inheritance_0(Individuals* pup, Individuals mom, Individuals dad) {
 
 				pup->chromo.nMut++;
 				//calculate fitness considering the mutation as heterozygote
-				pup->w -= (iter->second.h * iter->second.s);
+				pup->w *= (1 - (iter->second.h * iter->second.s));
 
 			}
+
 		}
 		if (!recomSites.empty()) recomSites.clear();
 		if (check_neutral) {
@@ -509,13 +505,14 @@ void inheritance_0(Individuals* pup, Individuals mom, Individuals dad) {
 		}
 	}
 	else {
-		hom = Bern(rdgen);
-		pup->chromo.linkNeut[0] = mom.chromo.linkNeut[hom];
-		check_neutral = false;
+	hom = Bern(rdgen);
+	pup->chromo.linkNeut[0] = mom.chromo.linkNeut[hom];
+	check_neutral = false;
 	}
 
 	check_neutral = true;
 
+	//Inherit homologue 2 from mate2 (mom)
 	if (dad.chromo.nMut > 0) {
 		//sample no. of crossovers
 		n_crossovers = crossn(rdgen);
@@ -554,22 +551,26 @@ void inheritance_0(Individuals* pup, Individuals mom, Individuals dad) {
 			}
 			//if mutation is on the right homologue inherit it, otherwise ignore it
 			if (iter->second.homol == hom || iter->second.homol == 2) {
-				iter2 = pup->chromo.mutations.find(iter->first);
-				//if mutation is already present --> it is homozygous
-				if (iter2 != pup->chromo.mutations.end()) {
-					iter2->second.homol = 2; //mutation is homozygote
-					pup->chromo.Nho++;
-					//change fitness effect
-					pup->w += (iter2->second.h * iter2->second.s);
-					pup->w -= (2*(iter2->second.s) + pow(iter2->second.s, 2));
-					//pup->w -= (2 * (iter2->second.s));
-				}
-				else { //mutation is heterozygote
-					pup->chromo.mutations[iter->first] = iter->second;
-					pup->chromo.mutations[iter->first].homol = 1;
-					pup->chromo.nMut++;
-					//fitness effect
-					pup->w -= (iter->second.h * iter->second.s);
+				if (pup->w > 0) {
+					iter2 = pup->chromo.mutations.find(iter->first);
+					if (iter2 == pup->chromo.mutations.end()) { //mutation is heterozygote
+						pup->chromo.mutations[iter->first] = iter->second;
+						pup->chromo.mutations[iter->first].homol = 1;
+						pup->chromo.nMut++;
+						//fitness effect
+						pup->w *= (1 - (iter->second.h * iter->second.s));
+					};
+					if (iter2 != pup->chromo.mutations.end()) {
+						iter2->second.homol = 2; //mutation is homozygote
+						pup->chromo.Nho++;
+						//change fitness effect
+						pup->w /= (1 - (iter2->second.h * iter2->second.s));
+						pup->w *= (1 - (iter2->second.s));
+						if ((1 - (iter2->second.s) <= 0)) {
+							pup->w = 0.0;
+						}
+					}
+
 				}
 			}
 		}
@@ -647,8 +648,9 @@ void inheritance_1(Individuals* pup, Individuals mom, Individuals dad) {
 
 				pup->chromo.nMut++;
 				//calculate fitness considering the mutation as heterozygote
-				pup->w -= (iter->second.h * iter->second.s);
+				pup->w *= (1 - (iter->second.h * iter->second.s));
 			}
+
 		}
 		if (!recomSites.empty()) recomSites.clear();
 		if (check_neutral) {
@@ -702,22 +704,28 @@ void inheritance_1(Individuals* pup, Individuals mom, Individuals dad) {
 			}
 			//if mutation is on the right homologue inherit it, otherwise ignore it
 			if (iter->second.homol == hom || iter->second.homol == 2) {
-				iter2 = pup->chromo.mutations.find(iter->first);
-				//if mutation is already present --> it is homozygous
-				if (iter2 != pup->chromo.mutations.end()) {
-					iter2->second.homol = 2; //mutation is homozygote
-					pup->chromo.Nho++;
-					//change fitness effect
-					pup->w += (iter2->second.h * iter2->second.s);
-					pup->w -= (2*(iter2->second.s) + pow(iter2->second.s,2));
-					//pup->w -= (2 * (iter2->second.s));
-				}
-				else { //mutation is heterozygote
-					pup->chromo.mutations[iter->first] = iter->second;
-					pup->chromo.mutations[iter->first].homol = 1;
-					pup->chromo.nMut++;
-					//fitness effect
-					pup->w -= (iter->second.h * iter->second.s);
+				if (iter->second.homol == hom || iter->second.homol == 2) {
+					if (pup->w > 0) {
+						iter2 = pup->chromo.mutations.find(iter->first);
+						if (iter2 == pup->chromo.mutations.end()) { //mutation is heterozygote
+							pup->chromo.mutations[iter->first] = iter->second;
+							pup->chromo.mutations[iter->first].homol = 1;
+							pup->chromo.nMut++;
+							//fitness effect
+							pup->w *= (1 - (iter->second.h * iter->second.s));
+						};
+						if (iter2 != pup->chromo.mutations.end()) {
+							iter2->second.homol = 2; //mutation is homozygote
+							pup->chromo.Nho++;
+							//change fitness effect
+							pup->w /= (1 - (iter2->second.h * iter2->second.s));
+							pup->w *= (1 - (iter2->second.s));
+							//pup->w *= (2 * (iter2->second.s));
+							if ((1 - (iter2->second.s) <= 0)) {
+								pup->w = 0.0;
+							}
+						}
+					}
 				}
 			}
 		}

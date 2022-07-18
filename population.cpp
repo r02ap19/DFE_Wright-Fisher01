@@ -32,7 +32,7 @@ void Population::initialise_pop(double k, double kk, Parameters para, std::gamma
 	for (int i = 0; i < (int)(N); i++) {
 		inds.push_back(Individuals(para));
 		inds[i].initialise(kk, para, finds, findpos, neut);
-		W += 1.0; //at initialisation every individual has viability = 0 (relative)
+		W += 1.0; //at initialisation every individual has viability or fertility = 1.0 (relative)
 	}
 }
 void Population::computeSums(Parameters para, Individuals ind) {

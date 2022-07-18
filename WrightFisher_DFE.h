@@ -56,9 +56,9 @@ std::poisson_distribution<> crossn(para.R);
 //Deleterious mutation position (and crossovers positions)
 std::uniform_real_distribution<> position(0.0, para.R);
 //Selection coefficient for mildly deleterious mutations
-std::gamma_distribution<> s_mild(1.0, para.mean_sd); //(shape, mean / shape)
-//Dominance coefficient for mildly deleterious mutations 
-double k = -log(2.0 * para.mean_hd) / para.mean_sd;
+std::gamma_distribution<> s_mild(1.0, double(para.mean_sd*2*para.assumed_Ne)); //(shape, mean / shape)
+//Dominance coefficient for mildly deleterious mutations
+double k_h = -log(2.0 * para.mean_hd) / para.mean_sd;
 
 //Distributions for sh_dist
 std::uniform_real_distribution<> uniform(0.0, 1.0);

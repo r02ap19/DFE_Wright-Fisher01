@@ -38,7 +38,9 @@ void Individuals::initialise(double kk, Parameters para, std::gamma_distribution
 			hom = findhom(gen);
 			//sample selection coefficient & dominance coefficient
 			if (para.sh_dist == 0) {
-				ss = finds(gen);
+				gamma_distribution<double> ss_cof(para.shape, (para.mean / para.shape));
+				ss = ss_cof(gen);
+				ss = ss / double(2.0 * para.assumed_Ne); // Ne-scaled selection coefficient scaled back to s.
 				std::uniform_real_distribution<> findh(0.0, std::exp(-kk * ss));
 				hh = findh(gen);
 			}
@@ -90,7 +92,7 @@ void Individuals::initialise(double kk, Parameters para, std::gamma_distribution
 			if (para.sh_dist == 8) {
 				gamma_distribution<double> ss_cof(para.shape, (para.mean / para.shape));
 				ss = ss_cof(gen);
-				ss = ss / double(2 * para.assumed_Ne);
+				ss = ss / double(2.0 * para.assumed_Ne);
 				hh = 1.0;
 				//if (ss > 1.0)(ss = 0.99999);
 				//while (ss > 1.0)
@@ -102,7 +104,7 @@ void Individuals::initialise(double kk, Parameters para, std::gamma_distribution
 			//sample position
 			pos = findpos(gen);
 			//add mutation
-			w -= chromo.addDelMutation(hom, pos, ss, hh);
+			if (w > 0)(w *= chromo.addDelMutation(hom, pos, ss, hh));
 		}
 	}
 }
@@ -121,7 +123,7 @@ void Individuals::benef_mutation(int nmut, double s, std::uniform_real_distribut
 		//sample position
 		pos = findpos(gen);
 		//add mutation
-		w += chromo.addDelMutation(hom, pos, ss, 1.0); //assume complete dominance of beneficial mutations
+		w /= chromo.addDelMutation(hom, pos, ss, 1.0); //assume complete dominance of beneficial mutations
 	}
 }
 //--------------------------------------------------------------------------
@@ -142,17 +144,18 @@ void Individuals::back_mutation(int nmut)
 			it->second.homol = hom(gen);
 			chromo.Nho--;
 			//update fitness
-			w += (2*(it->second.s)+ pow(it->second.s,2));
-			//w += (2 * (it->second.s));
-			w -= (it->second.h * it->second.s);
+			w /= (1-(it->second.s));
+			//w /= (2 * (it->second.s));
+			w *= (1-(it->second.h * it->second.s));
 		}
 		else { //mutation is heterozygote
 			chromo.mutations.erase(it);
 			chromo.nMut--;
 			//update fitness
-			w += (it->second.h * it->second.s);
+			w /= (1-(it->second.h * it->second.s));
 		}
 	}
+	if (w < 0)(w = 0);
 }
 //--------------------------------------------------------------------------
 void Individuals::delet_mutation(int nmut, double kk, std::uniform_real_distribution<> findpos,
@@ -166,7 +169,9 @@ void Individuals::delet_mutation(int nmut, double kk, std::uniform_real_distribu
 		//sample homologue
 		hom = findhom(gen);
 		if (para.sh_dist == 0) {
-			ss = finds(gen);
+			gamma_distribution<double> ss_cof(para.shape, (para.mean / para.shape));
+			ss = ss_cof(gen);
+			ss = ss / double(2.0 * para.assumed_Ne); // Ne-scaled selection coefficient scaled back to s.
 			std::uniform_real_distribution<> findh(0.0, std::exp(-kk * ss));
 			hh = findh(gen);
 		}
@@ -214,7 +219,7 @@ void Individuals::delet_mutation(int nmut, double kk, std::uniform_real_distribu
 		if (para.sh_dist == 8) {
 			gamma_distribution<double> ss_cof(para.shape, (para.mean / para.shape));
 			ss = ss_cof(gen);
-			ss = ss / double(2 * para.K);
+			ss = ss / double(2.0 * para.assumed_Ne);
 			hh = 1.0;
 			//if (ss > 1.0)(ss = 0.99999);
 			//while (ss > 1.0)
@@ -226,7 +231,7 @@ void Individuals::delet_mutation(int nmut, double kk, std::uniform_real_distribu
 		//sample position
 		pos = findpos(gen);
 		//add mutation
-		w -= chromo.addDelMutation(hom, pos, ss, hh);
+		if (w > 0)(w *= chromo.addDelMutation(hom, pos, ss, hh));
 	}
 }
 
@@ -257,7 +262,7 @@ void Individuals::delet_mutation(int nmut, std::uniform_real_distribution<> find
 	for (int i = 0; i < nmut; i++) {
 		hom = findhom(gen);
 		pos = findpos(gen);
-		w -= chromo.addDelMutation(hom, pos, ss, hh);
+		if(w > 0)(w *= chromo.addDelMutation(hom, pos, ss, hh));
 	}
 }
 

@@ -25,7 +25,8 @@ double Chromosome::addDelMutation(int hom, double pos, double ss, double hh) {
 	if (mutations.find(pos) == mutations.end()) {
 		nMut++;
 		mutations[pos] = mut;
-		v = (hh * ss);
+		v = (1-(hh * ss));
+		if (v < 0)(v = 0);
 	}
 	else v = 1.0;
 

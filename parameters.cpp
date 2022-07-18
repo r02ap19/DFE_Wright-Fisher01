@@ -3,9 +3,9 @@
 Parameters::Parameters() {
 
 	//Simulation
-	SimNr = 99001;
+	SimNr = 3;
 	rep = 1; //replicates
-	gen = 10000; //generations
+	gen = 10001; //generations
 	out_int = 1; //generation interval for output (population)
 	out_start = 1; //output start generation
 	PopMut_interval = 10000;
@@ -16,24 +16,25 @@ Parameters::Parameters() {
 	x_max = 1;
 	y_max = 1;
 
+	//DFE Simulations
+	sh_dist = 0;
+	neut_pos = 0;
+	mean = 50.0;
+	shape = 0.4;
+	neutral_genome = false;
+	assumed_Ne = 500;
+
 	//Deleterious mutations
 	loadEffect = 1; //0 = affects offsping survival; 1 = affects probability of reproducing;
 	initial_nMut = 0;
 	R = 10.0;
 	Ud = 1.0; //mutation rate for mildly deleterious mutations / diploid genome / generation (see Spigler et al. 2016, Evolution)
-	Ul = 0.0000000000001; //mutation rate for lethal mutations / diploid genome / generation (see Spigler et al. 2016, Evolution)
-	mean_sd = 0.05; //mean selection coefficient for mildly deleterious mutations (for some values of sh_dist)
-	mean_hd = 0.3; //mean dominance coefficient for mildly deleterious mutations (for some values of sh_dist)
+	Ul = 0.000000000000000000001; //mutation rate for lethal mutations / diploid genome / generation (see Spigler et al. 2016, Evolution)
+	mean_sd = (mean / (2*K)); //mean selection coefficient for mildly deleterious mutations (for some values of sh_dist)
+	mean_hd = 0.36; //mean dominance coefficient for mildly deleterious mutations (for some values of sh_dist)
 	sl = 1.0; //selection coefficient for lethal mutations (fix - not sampled from a distribution)
 	hl = 0.02; //mean dominance coefficient for lethal mutations
 
-	//DFE Simulations
-	sh_dist = 8;
-	neut_pos = 0;
-	mean = 50000000000000000000.0;
-	shape = 0.4;
-	neutral_genome = true;
-	assumed_Ne = 500;
 }
 
 void Parameters::outPara(string name) {
